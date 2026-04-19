@@ -1,0 +1,77 @@
+#include <iostream>
+#include <queue>
+using namespace std;
+
+// Order structure
+struct Order {
+    int price;
+    int quantity;
+
+    Order(int p, int q) : price(p), quantity(q) {}
+};
+
+// Comparator for Buy (Max Heap)
+struct BuyCompare {
+    bool operator()(Order a, Order b) {
+        return a.price < b.price; // higher price = higher priority
+    }
+};
+
+// Comparator for Sell (Min Heap)
+struct SellCompare {
+    bool operator()(Order a, Order b) {
+        return a.price > b.price; // lower price = higher priority
+    }
+};
+
+// Heaps
+priority_queue<Order, vector<Order>, BuyCompare> buyOrders;
+priority_queue<Order, vector<Order>, SellCompare> sellOrders;
+
+// Process orders
+void processOrder(string type, int price, int quantity) {
+
+    if (type == "buy") {
+        buyOrders.push(Order(price, quantity));
+        cout << "Buy Order: Price=" << price << " Qty=" << quantity << endl;
+    } else {
+        sellOrders.push(Order(price, quantity));
+        cout << "Sell Order: Price=" << price << " Qty=" << quantity << endl;
+    }
+
+    // Matching logic
+    while (!buyOrders.empty() && !sellOrders.empty() &&
+           buyOrders.top().price >= sellOrders.top().price) {
+
+        Order buy = buyOrders.top();
+        Order sell = sellOrders.top();
+
+        buyOrders.pop();
+        sellOrders.pop();
+
+        int matchedQty = min(buy.quantity, sell.quantity);
+
+        cout << "Trade Executed -> Price: " << sell.price
+             << " Quantity: " << matchedQty << endl;
+
+        // Reduce quantities
+        buy.quantity -= matchedQty;
+        sell.quantity -= matchedQty;
+
+        // Reinsert remaining orders
+        if (buy.quantity > 0)
+            buyOrders.push(buy);
+
+        if (sell.quantity > 0)
+            sellOrders.push(sell);
+    }
+}
+
+int main() {
+    processOrder("buy", 100, 10);
+    processOrder("buy", 105, 5);
+    processOrder("sell", 102, 7);
+    processOrder("sell", 99, 8);
+
+    return 0;
+}
